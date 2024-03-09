@@ -1,163 +1,210 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from 'react';
 import {
-  MDBBtn,
-  MDBCard,
-  MDBCardBody,
   MDBCol,
   MDBContainer,
-  MDBIcon,
-  MDBInput,
-  MDBRadio,
   MDBRow,
-} from "mdb-react-ui-kit";
-import { MyContext } from "../App";
-import { useNavigate } from "react-router-dom";
-
-
+  MDBCard,
+  MDBCardText,
+  MDBCardBody,
+  MDBCardImage,
+  MDBInput,
+  MDBBtn,
+  MDBBreadcrumb,
+  MDBBreadcrumbItem,
+  MDBProgress,
+  MDBProgressBar,
+  MDBIcon,
+  MDBListGroup,
+  MDBListGroupItem, MDBTypography
+} from 'mdb-react-ui-kit';
+import { MyContext } from '../App';
+import axios from 'axios';
+import Cookies from 'js-cookie';
+import { useNavigate } from 'react-router-dom';
 export default function Account() {
-  const navigate=useNavigate();
-  const{userRegistration,email,totalprice,setOrder,cartItem,setUserRegistration,order}=useContext(MyContext)
-const handlepay=()=>{
-  const user=userRegistration.map((x)=>x.emailexamp===email?{...x,order:order}:x)
-setUserRegistration(user);
+  const { username, mobNum, email, handleSubmit, setEmail, setUsername, setmobNum, item, cartItem } = useContext(MyContext);
+  const navigate = useNavigate();
+  const user = Cookies.get("email")
+  const mobile = Cookies.get("")
+  const [address, setAddress] = useState("")
+  const [city, setCity] = useState("")
+  const [orderdetail, setOrderDetail] = useState([]);
+  const handleorder = async () => {
 
-}
-const goback=()=>{
-navigate("/Cart")
-}
+
+    try {
+      const tk = Cookies.get("token");
+      const customerinfo = {
+        customerName: username,
+        customerPhone: mobNum,
+        customerCity: city,
+        homeAddress: address,
+        customerEmail: email,
+        transactionId: `${Math.random() * 1000}`
+      }
+      let response = await axios.post('http://localhost:5094/api/Order', customerinfo, {
+        headers: {
+          'Authorization': `Bearer ${tk}`
+        }
+      })
+      let result = response.data
+      console.log("order placed successfully,", result)
+      navigate("/Payment")
+    }
+    catch (ex) {
+      console.log("error in placing the order", ex);
+
+    }
+
+
+  }
+
+
+  const orderitems = async () => {
+    try {
+      const tk = Cookies.get("token");
+      let response = await axios.get("http://localhost:5094/api/Order", {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${tk}`
+        }
+      })
+      setOrderDetail(response.data);
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  useEffect(() => {
+    orderitems()
+  }, [])
+
+
   return (
-    <MDBContainer fluid className="py-5" style={{ backgroundColor: "#eee" }}>
-      <MDBRow className="d-flex justify-content-center">
-        <MDBCol md="8" lg="6" xl="4">
-          <MDBCard className="rounded-3">
-            <MDBCardBody className="mx-1 my-2">
-              <div className="d-flex align-items-center">
-                <div>
-                  <MDBIcon
-                    fab
-                    icon="cc-visa"
-                    size="4x"
-                    className="text-black pe-3"
-                  />
-                </div>
-              
-                     <p className="d-flex flex-column mb-0">
-                     <b></b>
-                     <span className="small text-muted">{email}</span>
-                     <span className="small text-muted">**** 8880</span>
-                   </p>
+    <section style={{ backgroundColor: '#eee' }}>
+      <MDBContainer className="py-5">
 
-                <div>
-                
-                 
-                </div>
-              </div>
-              <div className="pt-3">
-                <div className="d-flex flex-row pb-3">
-                  <div
-                    className="rounded border border-primary border-2 d-flex w-100 p-3 align-items-center"
-                    style={{ backgroundColor: "rgba(18, 101, 241, 0.07)" }}
-                  >
-                    <div className="d-flex align-items-center pe-3">
-                      <MDBRadio
-                        name="radioNoLabelX"
-                        id="radioNoLabel11"
-                        defaultChecked
-                      />
-                    </div>
-                    <div className="d-flex flex-column">
-                      <p className="mb-1 small text-primary">
-                        Total amount due
-                      </p>
-                      <h6 className="mb-0 text-primary">{totalprice}</h6>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="d-flex flex-row pb-3">
-                <div className="rounded border d-flex w-100 px-3 py-2 align-items-center">
-                  <div className="d-flex align-items-center pe-3">
-                    <MDBRadio name="radioNoLabelX" id="radioNoLabel11" />
-                  </div>
-                  <div className="d-flex flex-column py-1">
-                    <p className="mb-1 small text-primary">Other amount</p>
-                    <div className="d-flex flex-row align-items-center">
-                      <h6 className="mb-0 text-primary pe-1">$</h6>
-                      <MDBInput
-                        id="typeNumber"
-                        type="number"
-                        size="sm"
-                        style={{ width: "55px" }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="d-flex justify-content-between align-items-center pb-1">
-                <button onclick={goback}>GO BACK</button>
-                
-                <MDBBtn size="lg" onClick={handlepay}>Pay amount</MDBBtn>
-              </div>
-            </MDBCardBody>
-          </MDBCard>
-        </MDBCol>
-      </MDBRow>
-    </MDBContainer>
+
+        <MDBRow>
+          <MDBCol lg="4">
+            <MDBCard className="mb-4">
+              <MDBCardBody className="text-center">
+
+
+                <p >{user}</p>
+
+
+              </MDBCardBody>
+            </MDBCard>
+
+
+          </MDBCol>
+
+          {orderdetail && orderdetail?.map((item) => (
+
+            <MDBCard className="rounded-3 mb-2" key={item.prodId} >
+              <MDBCardBody className="p-1"  >
+                <MDBRow className="justify-content-between align-items-center" >
+                  <MDBCol md="2" lg="2" xl="2">
+                    <MDBCardImage className="rounded-3" fluid
+                      src={item.productImage}
+                    />
+                  </MDBCol>
+                  <MDBCol md="3" lg="2" xl="2">
+                    <MDBTypography tag="h5" className="mb-0">
+                      <p>{item.productName}</p>
+                    </MDBTypography>
+                  </MDBCol>
+
+                  <MDBCol md="3" lg="3" xl="2" className="offset-lg-1">
+                    <p className="lead fw-normal mb-2">{item.totalprice} </p>
+
+                  </MDBCol>
+                  <MDBCol md="3" lg="3" xl="2" className="offset-lg-1">
+                    <p className="lead fw-normal mb-2">{item.quantity} </p>
+
+                  </MDBCol>
+                  <MDBCol md="3" lg="3" xl="1" className="offset-lg-1">
+                    <p className="lead fw-normal mb-2">{item.orderStatus} </p>
+
+                  </MDBCol>
+
+                  <MDBCol md="3" lg="2" xl="2" className="d-flex justify-content-end">
+                    <MDBTypography tag="h5" className="mb-0">
+
+
+                    </MDBTypography>
+
+                  </MDBCol>
+                  <MDBCol md="1" lg="1" xl="1" className="text-end">
+                    <a href="#!" className="text-danger">
+                      <MDBIcon fas icon="trash text-danger" size="lg" />
+                    </a>
+
+                  </MDBCol>
+                </MDBRow>
+
+              </MDBCardBody>
+
+            </MDBCard>
+
+          ))}
+
+          <form onSubmit={handleSubmit}>
+            <MDBCol lg="8" className="justify-content-between align-items-center">
+              <MDBCard className="mb-4">
+                <MDBCardBody>
+                  <MDBRow>
+                    <MDBCol sm="3">
+                      <MDBCardText>Full Name</MDBCardText>
+                    </MDBCol>
+                    <MDBCol sm="9">{orderdetail?.customerName}
+                      <MDBInput wrapperClass='mb-3' id='form6Example3' label='Full Name' onChange={(e) => setUsername(e.target.value)} />
+                    </MDBCol>
+                  </MDBRow>
+                  <hr />
+
+                  <MDBRow>
+                    <MDBCol sm="3">{orderdetail?.customerEmail}
+                      <MDBCardText>Email</MDBCardText>
+                    </MDBCol>
+                    <MDBCol sm="9">
+                      <MDBInput wrapperClass='mb-4' id='form6Example3' label='Email' onChange={(e) => setEmail(e.target.value)} />                  </MDBCol>
+                  </MDBRow>
+                  <hr />
+                  <MDBRow>
+                    <MDBCol sm="3">{orderdetail?.homeAddress}
+                      <MDBCardText>Address</MDBCardText>
+                    </MDBCol>
+                    <MDBCol sm="9">
+                      <MDBInput wrapperClass='mb-4' id='form6Example3' label='Address' onChange={(e) => setAddress(e.target.value)} />                  </MDBCol>
+                  </MDBRow>
+                  <hr />
+                  <MDBRow>
+                    <MDBCol sm="3">{orderdetail?.customerPhone}
+                      <MDBCardText>Mobile</MDBCardText>
+                    </MDBCol>
+                    <MDBCol sm="9">
+                      <MDBInput wrapperClass='mb-4' id='form6Example3' label='Mobile' onChange={(e) => setmobNum(e.target.value)} />                  </MDBCol>
+                  </MDBRow>
+                  <hr />
+                  <MDBRow>
+                    <MDBCol sm="3">{orderdetail?.customerCity}
+                      <MDBCardText>city</MDBCardText>
+                    </MDBCol>
+                    <MDBCol sm="9">
+                      <MDBInput wrapperClass='mb-4' id='form6Example3' label='city' onChange={(e) => setCity(e.target.value)} />                  </MDBCol>
+                  </MDBRow>
+                  <hr />
+                </MDBCardBody>
+              </MDBCard>
+              <MDBBtn className='w-100 mb-4' color='dark' type='submit' onClick={handleorder} >confirm order</MDBBtn>
+            </MDBCol>
+          </form>
+
+        </MDBRow>
+
+      </MDBContainer>
+    </section>
   );
 }
-
-
-// import React from 'react';
-// import {
-//   MDBRow,
-//   MDBCol,
-//   MDBInput,
-//   MDBCheckbox,
-//   MDBBtn
-// } from 'mdb-react-ui-kit';
-
-// import { MyContext } from "../App";
-//  import { useNavigate } from "react-router-dom";
-// import { useContext } from 'react';
-
-// export default function Account() {
-//   const navigate=useNavigate();
-//   const{userRegistration,email,totalprice,setOrder,cartItem,setUserRegistration}=useContext(MyContext)
-// const handlepay=()=>{
-// setOrder(cartItem)
-// setUserRegistration(userRegistration);
-
-// }
-// const goback=()=>{
-// navigate("/Cart")
-// }
-//     <form>
-//       <MDBRow className='mb-4'>
-//         <MDBCol>
-//           <MDBInput id='form6Example1' label='First name' />
-//         </MDBCol>
-//         <MDBCol>
-//           <MDBInput id='form6Example2' label='Last name' />
-//         </MDBCol>
-//       </MDBRow>
-
-//       <MDBInput wrapperClass='mb-4' id='form6Example3' label='Company name' />
-//       <MDBInput wrapperClass='mb-4' id='form6Example4' label='Address' />
-//       <MDBInput wrapperClass='mb-4' type='email' id='form6Example5' label='Email' />
-//       <MDBInput wrapperClass='mb-4' type='tel' id='form6Example6' label='Phone' />
-
-//       <MDBInput wrapperClass='mb-4' textarea id='form6Example7' rows={4} label='Additional information' />
-
-//       <MDBCheckbox
-//         wrapperClass='d-flex justify-content-center mb-4'
-//         id='form6Example8'
-//         label='Create an account?'
-//         defaultChecked
-//       />
-
-//       <MDBBtn className='mb-4' type='submit' block  onClick={handlepay}>
-//         Place order
-//       </MDBBtn>
-//     </form>
-//   ;
-// }

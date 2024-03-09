@@ -27,33 +27,21 @@ import {
 } from 'mdb-react-ui-kit';
 import { useNavigate } from 'react-router-dom';
 import { MyContext } from '../App';
+import Cookies from 'js-cookie';
 
 export default function Navbar() {
-  const{handleSubmit,handlesearch,userLogged,setuserLogged,item,handlepaymentnav,handleclickcart,userRegistration,adminregister,iflogin,setIfLogin,email,setCartItem,cartItem,setUserRegistration,setSearch}=useContext(MyContext);
+  const{handleSubmit,handlesearch,userLogged,setuserLogged,item,handlepaymentnav,handleclickcart,userRegistration,adminregister,iflogin,setIfLogin,email,setCartItem,cartItem,setUserRegistration,setSearch,handleLogout}=useContext(MyContext);
   const navigate=useNavigate();
   const [openBasic, setOpenBasic] = useState(false);
 
-const handleLogout = () => {
- 
-  const newUserRegistration = userRegistration.map(user => {
-    if (user.id === userLogged.id) {
-      return { ...user, cart: cartItem };
-    }
-    return user;
-  });
-  setUserRegistration(newUserRegistration);
-setCartItem([])
-  setuserLogged({});
-  setIfLogin(false);
-};
+
 const [adminLoged, setAdminLoged] = useState(false);
-// const[search,setSearch]=useState("");
-// const [result, setResult] = useState([])
-// const handlesearch=()=>{
-// const searcheditem=item.filter(x=>x.model.toLowerCase().includes(search.toLowerCase()))
-// setResult(searcheditem);
-// navigate("/Search");
-// }
+
+
+
+const handleWishList=()=>{
+navigate("/WishList")
+}
 useEffect(() => {
 
   if (userLogged && userLogged.cart) {
@@ -91,7 +79,7 @@ useEffect(() => {
           </form>
           <div  style={{ display: 'flex', justifyContent: 'flex-end' }}>
          
-          <button   > <FaRegHeart /></button>
+          <button   onClick={handleWishList}>  <FaRegHeart /></button>
           <button   onClick={handleclickcart}> <FaShoppingCart /></button>
          <button   onClick={handlepaymentnav}> <FaUser  /></button> 
          </div>
@@ -123,8 +111,8 @@ useEffect(() => {
 
         <MDBCollapse navbar open={openBasic}>
           <MDBNavbarNav className='mr-auto mb-2 mb-lg-0'>
-             <Link to="MensAdmin">Men</Link>
-            <Link to="WomensAdmin">Women</Link>
+             {/* <Link to="MensAdmin">Men</Link>
+            <Link to="WomensAdmin">Women</Link> */}
             <Link to="User">users</Link>
             <Link to="Products">products</Link>
             <Link to="Login">Login</Link>

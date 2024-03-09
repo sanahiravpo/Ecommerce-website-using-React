@@ -1,5 +1,5 @@
-import React, { useContext } from 'react';
-
+import React, { useContext,useEffect } from 'react';
+import axios from "axios"
 import { Link } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 
@@ -20,7 +20,12 @@ import { useNavigate } from 'react-router-dom';
 function WomensAdmin() {
 const navigate=useNavigate();
   const { item, setItem} = useContext(MyContext);
-const women=item.filter((items)=>items.category==="Female")
+useEffect(()=>{
+  axios.get("http://localhost:5094/api/Product/Category?id=2")
+  .then((res)=>{
+    setItem(res.data)
+  })
+})
 
   return (
     <MDBContainer fluid className="my-5 text-center">
@@ -29,8 +34,8 @@ const women=item.filter((items)=>items.category==="Female")
       </h4>
 
       <MDBRow>
-        {women.map((items)=>(
- <MDBCol md="5" lg="2" className="mb-4" key={items.id} >
+        {item.length!=null && item?.map((items)=>(
+ <MDBCol md="5" lg="2" className="mb-4" key={items.productId} >
 
  <MDBCard>
    <MDBRipple
@@ -40,7 +45,7 @@ const women=item.filter((items)=>items.category==="Female")
    >
      
      <MDBCardImage
-       src={items.img}
+       src={items.productImage}
        fluid
        className="w-100"
      />
@@ -63,11 +68,12 @@ const women=item.filter((items)=>items.category==="Female")
 
      </a>
      <a href="#!" className="text-reset">
-       <p>{items.title}</p>
+       <p>{items.productName}</p>
      </a>
      <h6 className="mb-3">
+     <p>{items.category}</p>
        <s>$61.99</s>
-       <strong className="ms-2 text-danger">${items.price}</strong>
+       <strong className="ms-2 text-danger">${items.unitPrice}</strong>
      </h6>
     
    </MDBCardBody>

@@ -1,4 +1,4 @@
-import React, { useContext,useEffect } from 'react';
+import React, { useContext,useEffect, useState } from 'react';
 import axios from "axios"
 import { Link } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
@@ -14,21 +14,29 @@ import {
   MDBBtn,
   MDBRipple,
 } from "mdb-react-ui-kit";
-import { MyContext } from '../../App';
-import { useNavigate } from 'react-router-dom';
+import { MyContext } from '../App';
+import Cookies from 'js-cookie';
 
 
-function MensAdmin() {
-const navigate=useNavigate();
+function WishList() {
+
   const { item,setItem } = useContext(MyContext);
-
+const[wished,setWished]=useState([{}])
+const fetchWishList=async()=>{
+    const tk=Cookies.get("token")
+    let response=await axios.get("http://localhost:5094/api/WishList ",{
+        headers:{
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${tk}`
+          }
+    })
+    setWished(response.data)
+}
 
 useEffect(()=>{
-  axios.get("http://localhost:5094/api/Product/Category?id=1")
-  .then((res)=>{
-    setItem(res.data)
-  })
-})
+    fetchWishList();
+},[])
+
   return (
     <MDBContainer fluid className="my-5 text-center">
       <h4 className="mt-4 mb-5">
@@ -36,9 +44,9 @@ useEffect(()=>{
       </h4>
 
       <MDBRow>
-        {item?.map((items)=>(
- <MDBCol md="5" lg="2" className="mb-4" key={items.productId} >
-
+        {wished?.map((items)=>(
+ <MDBCol md="5" lg="2" className="mb-4" key={items.Id} >
+ 
  <MDBCard>
    <MDBRipple
      rippleColor="light"
@@ -54,7 +62,7 @@ useEffect(()=>{
      <a href="#!">
        <div className="mask">
          <div class="d-flex justify-content-start align-items-end h-100">
-          
+           
          </div>
        </div>
        <div className="hover-overlay">
@@ -67,20 +75,20 @@ useEffect(()=>{
    </MDBRipple>
    <MDBCardBody>
      <a href="#!" className="text-reset">
-      
+     
      </a>
      <a href="#!" className="text-reset">
-       <p>{items.productName}</p>
+       <p className="fw-bold mb-1" >{items.productName}</p>
      </a>
      <h6 className="mb-3">
-     <p>{items.category}</p>
+    
        <s>$61.99</s>
        <strong className="ms-2 text-danger">${items.unitPrice}</strong>
+      
      </h6>
-   
    </MDBCardBody>
  </MDBCard>
-
+ 
 </MDBCol>
         ))}
        
@@ -89,4 +97,4 @@ useEffect(()=>{
   );
 }
 
-export default MensAdmin;
+export default WishList;

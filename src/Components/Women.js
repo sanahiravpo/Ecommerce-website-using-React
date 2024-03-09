@@ -1,6 +1,6 @@
-import React, { useContext } from 'react';
-
-import { Link } from 'react-router-dom';
+import React, { useContext,useEffect } from 'react';
+import axios from "axios"
+import { Link, useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 
 import {
@@ -14,12 +14,35 @@ import {
   MDBBtn,
   MDBRipple,
 } from "mdb-react-ui-kit";
+import { FaRegHeart } from "react-icons/fa";
 import { MyContext } from '../App';
+import Cookies from 'js-cookie';
 
 function Women() {
 
-  const { item } = useContext(MyContext);
-const women=item.filter((items)=>items.category==="Female")
+  const { item,setItem } = useContext(MyContext);
+const navigate=useNavigate()
+useEffect(()=>{
+  axios.get("http://localhost:5094/api/Product/Category?id=2")
+  .then((res)=>{
+    setItem(res.data)
+  })
+},[])
+
+// const handlewish=async(productId)=>{
+//   const tk=Cookies.get("token");
+//  await axios.post(`http://localhost:5094/api/WishList?productid=${productId} `,{
+//   headers:{
+//     'Content-Type': 'application/json',
+//     'Authorization': `Bearer ${tk}`
+//   }
+//  })
+//  navigate("/WishList");
+ 
+// }
+
+
+
   return (
     <MDBContainer fluid className="my-5 text-center">
       <h4 className="mt-4 mb-5">
@@ -27,9 +50,11 @@ const women=item.filter((items)=>items.category==="Female")
       </h4>
 
       <MDBRow>
-        {women.map((items)=>(
- <MDBCol md="5" lg="2" className="mb-4" key={items.id} >
-   <Link to={`/Women/${items.id}`}>
+        {
+        
+        item.length!=null && item?.map((items)=>(
+ <MDBCol md="5" lg="2" className="mb-4" key={items.productId} >
+   <Link to={`/Men/${items.productId}`}>
  <MDBCard>
    <MDBRipple
      rippleColor="light"
@@ -38,18 +63,14 @@ const women=item.filter((items)=>items.category==="Female")
    >
      
      <MDBCardImage
-       src={items.img}
+       src={items.productImage}
        fluid
        className="w-100"
      />
      <a href="#!">
        <div className="mask">
          <div class="d-flex justify-content-start align-items-end h-100">
-           <h5>
-             {/* <span className="badge bg-primary ms-2">New</span>
-             <span className="badge bg-success ms-2">Eco</span>
-             <span className="badge bg-danger ms-2">-10%</span> */}
-           </h5>
+           
          </div>
        </div>
        <div className="hover-overlay">
@@ -62,15 +83,18 @@ const women=item.filter((items)=>items.category==="Female")
    </MDBRipple>
    <MDBCardBody>
      <a href="#!" className="text-reset">
-   
+     
      </a>
      <a href="#!" className="text-reset">
-       <p>{items.title}</p>
+       <p className="fw-bold mb-1" >{items.productName}</p>
      </a>
      <h6 className="mb-3">
+     <p>{items.category}</p>
        <s>$61.99</s>
-       <strong className="ms-2 text-danger">${items.price}</strong>
+       <strong className="ms-2 text-danger">${items.unitPrice}</strong>
+      
      </h6>
+     {/* <button  onClick={()=>handlewish(items.productId)} >  <FaRegHeart /></button> */}
    </MDBCardBody>
  </MDBCard>
  </Link>

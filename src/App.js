@@ -25,11 +25,18 @@ import SingleUser from "./Components/Admin/SingleUser";
 import About from "./Components/About";
 import Search from "./Components/Search";
 import Footer from "./Components/Footer"
+import axios from "axios"
+import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode"
+import Payment from './Components/Payment';
+import SingleOrder from './Components/Admin/SingleOrder';
+import WishList from './Components/WishList';
+
 export const MyContext = createContext();
 function App() {
    const navigate = useNavigate();
-   
-   const [item, setItem] = useState(Data);//items
+
+   const [item, setItem] = useState([]);//items
    const [username, setUsername] = useState("");//changedata
    const [mobNum, setmobNum] = useState("");
    const [password, setPassword] = useState("")
@@ -51,12 +58,12 @@ function App() {
 
       }]);
 
- //form submission
-      const handleSubmit = (e) => {
-         e.preventDefault();
-      }
+   //form submission
+   const handleSubmit = (e) => {
+      e.preventDefault();
+   }
 
-  
+
    const [adminregister, setAdminRegister] = useState([{
       name: "admin",
       number: "1234567",
@@ -66,49 +73,52 @@ function App() {
    }])
 
    //add to cart
-   const handleCart = (items) => {
-      if (userLogged) {
-        const isItemExist = cartItem.find(c => c.id === items.id);
-        if (isItemExist) {
-         const updatedCart = cartItem.map(c => c.id === items.id ? { ...c, Quantity: c.Quantity + 1, total: (c.Quantity + 1) * Number(c.price) } : c);
-          setCartItem(updatedCart);
-        } else {
-         const newItem = { ...items, Quantity: 1, total: Number(items.price) };
-         setCartItem([...cartItem, newItem]);
-        }
-        navigate("/Cart");
+   const handleCart = async (productId) => {
     
-     
-        setUserRegistration(prevUsers => prevUsers.map(user => {
-          if (user.id === userLogged.id) {
-            return { ...user, cart: cartItem };
-          }
-          return user;
-        }));
-      } else {
-        navigate("/Login");
+      try {
+         const tk = Cookies.get("token");
+         let response = await axios.post(`http://localhost:5094/api/Cart/addproduct?productid=${productId}`, null, {
+            headers: {
+               'Content-Type': 'application/json',
+               'Authorization': `Bearer ${tk}`
+            }
+         }
+         )
+          
+         alert(response.data);
+         navigate("/Cart")
       }
-    };
-    
-    
-   
-//cart on navbar
 
-   const handleclickcart = () => {
-      const finduser = userRegistration.find(x => x.emailexamp === email && x.passwordexamp === password);
-      if (finduser) {
-         navigate("/Cart");
-      }
-      else {
-         navigate("/Login");
+      catch (error) {
+         console.error("Error adding items to cart:", error);
+         window.alert("Failed to add items to the cart. Please try again.");
       }
    }
-  
- 
 
-//signup
+   //cart on navbar
 
-   const signUpClick = () => {
+   const handleclickcart = () => {
+      
+const tk=Cookies.get("token");
+if(tk){
+   navigate("/Cart");
+
+}
+else{
+   navigate("/Login");
+}
+
+
+
+
+   }
+
+
+
+   //signup
+
+
+   const signUpClick = async () => {
       if (!username || !email || !password || !mobNum) {
          alert("Please fill in all fields.");
          return;
@@ -125,45 +135,76 @@ function App() {
          return;
       }
 
-      setUserRegistration([...userRegistration, { usernameexamp: username, emailexamp: email, passwordexamp: password, mobNumexamp: mobNum,cart:cartItem }]);
-     
+      // setUserRegistration([...userRegistration, { usernameexamp: username, emailexamp: email, passwordexamp: password, mobNumexamp: mobNum,cart:cartItem }]);
+      const newuser = { username: username, email: email, passwordHash: password, phone: mobNum, cart: cartItem }
+      try {
+         let response = await axios.post("http://localhost:5094/api/User/register", newuser)
 
-      navigate("/Login")
+         let result = response.data
+
+         if (result) {
+           
+            navigate("/Login")
+         }
+         else {
+            window.alert("failed");
+         }
+      }
+      catch (error) {
+         console.error("fghfghj", error);
+      }
+
    }
    //sign in
-   const SignInClick = () => {
-      const finduser = userRegistration.find(x => x.emailexamp === email && x.passwordexamp === password);
-      const findadmin = adminregister.find(x => x.email === email && x.password === password);
-      if (finduser) {
-        setIfLogin(true);
-        setuserLogged(finduser);
-       
-        if (finduser.cart) {
-          setCartItem(finduser.cart);
-        }
+   const [token, setToken] = useState(null);
+   const [role, setrole] = useState(null);
+   const SignInClick = async () => {
+   
+      try {
+         let response = await axios.post("http://localhost:5094/api/User/login ", { email, password });
 
-         navigate("/NewCollection");
+
+         let result = await response.data
+
+         const decToken = jwtDecode(result.token)
+         Cookies.set('role', decToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"], { expires: 7, secure: true })
+         Cookies.set('token', result.token, { expires: 7, secure: true })
+         Cookies.set('email', result.email, { expires: 7, secure: true })
+         Cookies.set('password', result.password, { expires: 7, secure: true })
+
+         if (Cookies.get('role') == 'user') {
+            window.alert("success")
+            navigate("/");
+
+         }
+              else if(Cookies.get('role')=='admin'){
+               navigate("/Products")
+               setIfLogin(false);
+         }
+
+
+
       }
-      else if (findadmin) {
-         setIfLogin(false)
-         navigate("/Products");
+      catch (error) {
+         window.alert("Failed to sign in. Please try again.please register");
+
       }
-      else {
-         navigate("/SignUp")
-      }
+
+    
    }
    //total price
-   const totalprice = cartItem?.reduce((x, item) => x + item.total, 0);
+   const totalAmount = cartItem.reduce((x, item) => x + item.totalprice, 0);
+   console.log(totalAmount)
    //totalquantity
-   const totalQuantity = cartItem?.reduce((x, item) => x + item.Quantity, 0);
-   
+   const totalQuantity = cartItem?.reduce((x, item) => x + item.quantity, 0);
+
    //checkout
    const handlecheckout = () => {
-      const finduser = userRegistration.find(x => x.emailexamp === email && x.passwordexamp == password);
-      if (totalQuantity > 0 && finduser) {
-         setOrder(cartItem);
+      // const finduser = userRegistration.find(x => x.emailexamp === email && x.passwordexamp == password);
+      // if (totalQuantity > 0 && finduser) {
+      //    setOrder(cartItem);
          navigate("/Account");
-      }
+      
 
 
    }
@@ -177,21 +218,38 @@ function App() {
          navigate("/Login")
       }
    }
-   const[search,setSearch]=useState("");
+   const [search, setSearch] = useState("");
    const [result, setResult] = useState([])
-   const handlesearch=()=>{
-   const searcheditem=item.filter(x=>x.model.toLowerCase().includes(search.toLowerCase()))
-   setResult(searcheditem);
-   navigate("/Search");
-   }
+   const handlesearch =async  () => {
+      try{
+         const response=await axios.get(`http://localhost:5094/api/Product/search-products?search=${search}`);
 
+         setResult(response.data);
+              navigate("/Search");
+      }
+      catch(ex){
+         console.log("no utems found",ex)
+      }
+      // const searcheditem = item.filter(x => x.model.toLowerCase().includes(search.toLowerCase()))
+
+   }
+   const handleLogout = () => {
+
+      Cookies.remove('token');
+      Cookies.remove('email');
+      Cookies.remove('password');
+      setToken(null);
+      setrole(null);
+      navigate("/");
+
+      };
 
    return (
       <>
-         <MyContext.Provider value={{setSearch,handlesearch,result,userLogged,setCartItem,setuserLogged, item, order, cartItem, setItem, iflogin, userRegistration, adminregister, setUserRegistration, setOrder, handlepaymentnav, totalprice, totalQuantity, handlecheckout, SignInClick, signUpClick, item, userRegistration, handleSubmit, handleCart, cartItem, setCartItem, username, setUsername, mobNum, setmobNum, password, setPassword, email, setEmail, handleclickcart, setIfLogin }}>
+         <MyContext.Provider value={{handleLogout,search,totalAmount, setSearch, handlesearch, result, userLogged, setCartItem, setuserLogged, item, order, cartItem, setItem, iflogin, userRegistration, adminregister, setUserRegistration, setOrder, handlepaymentnav, totalQuantity, handlecheckout, SignInClick, signUpClick, item, userRegistration, handleSubmit, handleCart, cartItem, setCartItem, username, setUsername, mobNum, setmobNum, password, setPassword, email, setEmail, handleclickcart, setIfLogin }}>
             <Navbar />
             <Routes>
-               <Route path="/" element={<Home />} />
+               <Route path="/" element={<Home/>} />
                <Route path="/NewCollection" element={<NewCollection />} />
 
                <Route path="/Men" element={<Men />} />
@@ -205,13 +263,16 @@ function App() {
                <Route path="/Login" element={<Login />} />
                <Route path="/SignUp" element={<SignUp />} />
                <Route path="/About" element={<About />} />
-               <Route path="/MensAdmin" element={<MensAdmin />} />
-               <Route path="/WomensAdmin" element={<WomensAdmin />} />
+               {/* <Route path="/MensAdmin" element={<MensAdmin />} />
+               <Route path="/WomensAdmin" element={<WomensAdmin />} /> */}
+               <Route path="/Payment" element={<Payment />} />
                <Route path="/Products" element={<Products />} />
+               <Route path="/WishList" element={<WishList />} />
                <Route path="/Products/:id" element={<UpdateProduct />} />
                <Route path="/Addproduct" element={<Addproduct />} />
                <Route path="/User" element={<User />} />
-               <Route path="/User/:userId" element={<SingleUser />} />
+               <Route path="/User/Orders/:userId" element={<SingleUser />} />
+               <Route path="/User/:userId" element={<SingleOrder />} />
             </Routes>
             <Footer />
          </MyContext.Provider>
